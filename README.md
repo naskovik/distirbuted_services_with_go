@@ -1,0 +1,1 @@
+This is a project made by following the book "Distributed Services with Go" by Travis Jeffery. Although it's **not** a respresentation of my own Go or Distributed Services (yet) it does aim to showcase which concepts I have been learning and which libraries or packages I know and understand the use case of.
