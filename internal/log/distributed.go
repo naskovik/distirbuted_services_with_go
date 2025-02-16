@@ -172,6 +172,41 @@ func (d *DistributedLog) apply(reqType RequestType, req proto.Message) (interfac
 	return res, nil
 }
 
+func (d *DistributedLog) Read(offset uint64) (*api.Record, error) {
+	return d.log.Read(offset)
+}
+
+func (d *DistributedLog) Join(id, addr string) error {
+	configureFuture := d.raft.GetConfiguration()
+	if err := configureFuture.Error(); err != nil {
+		return err
+	}
+	serverID := raft.ServerID(id)
+	serverAddr := raft.ServerAddress(addr)
+	for _, srv := range configureFuture.Configuration().Servers {
+		if srv.ID == serverID || srv.Address == serverAddr {
+			// server has already joined
+			return nil
+		}
+		// remove the existing server
+		removeFuture := d.raft.RemoveServer(serverID, 0, 0)
+		if err := removeFuture.Error(); err != nil {
+			return err
+		}
+	}
+	addFuture := d.raft.AddVoter(serverID, serverAddr, 0, 0)
+	if err := addFuture.Error(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DistributedLog) Leave(id string) error {
+	removeFuture := d.raft.RemoveServer(raft.ServerID(id), 0, 0)
+	return removeFuture.Error()
+}
+
 var _ raft.FSM = (*fsm)(nil)
 
 type fsm struct {
