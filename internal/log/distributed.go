@@ -207,6 +207,30 @@ func (d *DistributedLog) Leave(id string) error {
 	return removeFuture.Error()
 }
 
+func (d *DistributedLog) WaitForLeader(timeout time.Duration) error {
+	timeoutc := time.After(timeout)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-timeoutc:
+			return fmt.Errorf("timed out")
+		case <-ticker.C:
+			if d := d.raft.Leader(); d != "" {
+				return nil
+			}
+		}
+	}
+}
+
+func (d *DistributedLog) Close() error {
+	f := d.raft.Shutdown()
+	if err := f.Error(); err != nil {
+		return err
+	}
+	return d.log.Close()
+}
+
 var _ raft.FSM = (*fsm)(nil)
 
 type fsm struct {
