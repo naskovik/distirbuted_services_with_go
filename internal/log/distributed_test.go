@@ -26,7 +26,7 @@ func TestMultipleNodes(t *testing.T) {
 		defer func(dir string) {
 			_ = os.RemoveAll(dir)
 		}(dataDir)
-		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1%d", ports[i]))
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", ports[i]))
 		require.NoError(t, err)
 
 		config := log.Config{}
@@ -40,8 +40,10 @@ func TestMultipleNodes(t *testing.T) {
 		if i == 0 {
 			config.Raft.Bootstrap = true
 		}
+
 		l, err := log.NewDistributedLog(dataDir, config)
 		require.NoError(t, err)
+
 		if i != 0 {
 			err = logs[0].Join(fmt.Sprintf("%d", i), ln.Addr().String())
 			require.NoError(t, err)
@@ -59,6 +61,7 @@ func TestMultipleNodes(t *testing.T) {
 	for _, record := range records {
 		off, err := logs[0].Append(record)
 		require.NoError(t, err)
+
 		require.Eventually(t, func() bool {
 			for j := 0; j < nodeCount; j++ {
 				got, err := logs[j].Read(off)
@@ -66,7 +69,7 @@ func TestMultipleNodes(t *testing.T) {
 					return false
 				}
 				record.Offset = off
-				if !reflect.DeepEqual(record.Value, got.Value) {
+				if !reflect.DeepEqual(got.Value, record.Value) {
 					return false
 				}
 			}
