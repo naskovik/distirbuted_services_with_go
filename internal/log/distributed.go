@@ -22,6 +22,19 @@ type DistributedLog struct {
 	raft   *raft.Raft
 }
 
+func NewDistributedLog(dataDir string, config Config) (*DistributedLog, error) {
+	d := &DistributedLog{
+		config: config,
+	}
+	if err := d.setupLog(dataDir); err != nil {
+		return nil, err
+	}
+	if err := d.setupRaft(dataDir); err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+
 func (d *DistributedLog) setupLog(dataDir string) error {
 	logDir := filepath.Join(dataDir, "log")
 	var err error
