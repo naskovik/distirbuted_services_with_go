@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Deprecated: The service uses Raft for replication,
+// so we won't be needing our own replicator
 type Replicator struct {
 	DialOptions []grpc.DialOption
 	LocalServer api.LogClient

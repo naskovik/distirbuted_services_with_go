@@ -26,7 +26,11 @@ func TestMultipleNodes(t *testing.T) {
 		defer func(dir string) {
 			_ = os.RemoveAll(dir)
 		}(dataDir)
-		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", ports[i]))
+
+		ln, err := net.Listen(
+			"tcp",
+			fmt.Sprintf("127.0.0.1:%d", ports[i]),
+		)
 		require.NoError(t, err)
 
 		config := log.Config{}
@@ -36,6 +40,9 @@ func TestMultipleNodes(t *testing.T) {
 		config.Raft.ElectionTimeout = 50 * time.Millisecond
 		config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
 		config.Raft.CommitTimeout = 5 * time.Millisecond
+		// END: distributed_log_test_intro
+
+		// START: distributed_log_test_cont
 
 		if i == 0 {
 			config.Raft.Bootstrap = true
@@ -45,15 +52,20 @@ func TestMultipleNodes(t *testing.T) {
 		require.NoError(t, err)
 
 		if i != 0 {
-			err = logs[0].Join(fmt.Sprintf("%d", i), ln.Addr().String())
+			err = logs[0].Join(
+				fmt.Sprintf("%d", i), ln.Addr().String(),
+			)
 			require.NoError(t, err)
 		} else {
 			err = l.WaitForLeader(3 * time.Second)
 			require.NoError(t, err)
 		}
+
 		logs = append(logs, l)
 	}
+	// END: distributed_log_test_cont
 
+	// START: distributed_log_test_replicate
 	records := []*api.Record{
 		{Value: []byte("first")},
 		{Value: []byte("second")},
@@ -76,13 +88,17 @@ func TestMultipleNodes(t *testing.T) {
 			return true
 		}, 500*time.Millisecond, 50*time.Millisecond)
 	}
+	// END: distributed_log_test_replicate
 
+	// START: distributed_log_test_leave
 	err := logs[0].Leave("1")
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
 
-	off, err := logs[0].Append(&api.Record{Value: []byte("third")})
+	off, err := logs[0].Append(&api.Record{
+		Value: []byte("third"),
+	})
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)

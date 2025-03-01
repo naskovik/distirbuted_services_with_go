@@ -405,7 +405,6 @@ func (s *StreamLayer) Dial(
 	if err != nil {
 		return nil, err
 	}
-
 	if s.peerTLSConfig != nil {
 		conn = tls.Client(conn, s.peerTLSConfig)
 	}
