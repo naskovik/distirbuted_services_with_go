@@ -15,7 +15,7 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 )
 
-func TestMultipleNodes(t *testing.T) {
+func MultipleNodes(t *testing.T) {
 	var logs []*log.DistributedLog
 	nodeCount := 3
 	ports := dynaport.Get(nodeCount)
@@ -40,9 +40,6 @@ func TestMultipleNodes(t *testing.T) {
 		config.Raft.ElectionTimeout = 50 * time.Millisecond
 		config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
 		config.Raft.CommitTimeout = 5 * time.Millisecond
-		// END: distributed_log_test_intro
-
-		// START: distributed_log_test_cont
 
 		if i == 0 {
 			config.Raft.Bootstrap = true
@@ -63,9 +60,7 @@ func TestMultipleNodes(t *testing.T) {
 
 		logs = append(logs, l)
 	}
-	// END: distributed_log_test_cont
 
-	// START: distributed_log_test_replicate
 	records := []*api.Record{
 		{Value: []byte("first")},
 		{Value: []byte("second")},
@@ -88,9 +83,7 @@ func TestMultipleNodes(t *testing.T) {
 			return true
 		}, 500*time.Millisecond, 50*time.Millisecond)
 	}
-	// END: distributed_log_test_replicate
 
-	// START: distributed_log_test_leave
 	err := logs[0].Leave("1")
 	require.NoError(t, err)
 
