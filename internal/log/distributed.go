@@ -137,10 +137,7 @@ func (l *DistributedLog) Append(record *api.Record) (uint64, error) {
 	return res.(*api.ProduceResponse).Offset, nil
 }
 
-func (l *DistributedLog) apply(reqType RequestType, req proto.Message) (
-	interface{},
-	error,
-) {
+func (l *DistributedLog) apply(reqType RequestType, req proto.Message) (any, error) {
 	var buf bytes.Buffer
 	_, err := buf.Write([]byte{byte(reqType)})
 	if err != nil {
@@ -238,7 +235,7 @@ const (
 	AppendRequestType RequestType = 0
 )
 
-func (l *fsm) Apply(record *raft.Log) interface{} {
+func (l *fsm) Apply(record *raft.Log) any {
 	buf := record.Data
 	reqType := RequestType(buf[0])
 	switch reqType {
@@ -248,7 +245,7 @@ func (l *fsm) Apply(record *raft.Log) interface{} {
 	return nil
 }
 
-func (l *fsm) applyAppend(b []byte) interface{} {
+func (l *fsm) applyAppend(b []byte) any {
 	var req api.ProduceRequest
 	err := proto.Unmarshal(b, &req)
 	if err != nil {

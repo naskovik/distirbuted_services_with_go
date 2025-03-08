@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 	"path"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -53,8 +53,8 @@ func (l *Log) setup() error {
 		off, _ := strconv.ParseUint(offStr, 10, 0)
 		baseOffsets = append(baseOffsets, off)
 	}
-	sort.Slice(baseOffsets, func(i, j int) bool {
-		return baseOffsets[i] < baseOffsets[j]
+	slices.SortFunc(baseOffsets, func(i, j uint64) int {
+		return int(baseOffsets[i] - baseOffsets[j])
 	})
 	for i := 0; i < len(baseOffsets); i++ {
 		if err = l.newSegment(baseOffsets[i]); err != nil {
