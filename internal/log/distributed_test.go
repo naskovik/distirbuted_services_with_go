@@ -20,7 +20,7 @@ func MultipleNodes(t *testing.T) {
 	nodeCount := 3
 	ports := dynaport.Get(nodeCount)
 
-	for i := 0; i < nodeCount; i++ {
+	for i := range nodeCount {
 		dataDir, err := os.MkdirTemp("", "distributed-log-test")
 		require.NoError(t, err)
 		defer func(dir string) {
@@ -70,7 +70,7 @@ func MultipleNodes(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
-			for j := 0; j < nodeCount; j++ {
+			for j := range nodeCount {
 				got, err := logs[j].Read(off)
 				if err != nil {
 					return false
@@ -84,10 +84,23 @@ func MultipleNodes(t *testing.T) {
 		}, 500*time.Millisecond, 50*time.Millisecond)
 	}
 
-	err := logs[0].Leave("1")
+	servers, err := logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 3, len(servers))
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
+	require.False(t, servers[2].IsLeader)
+
+	err = logs[0].Leave("1")
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
+
+	servers, err = logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(servers))
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
 
 	off, err := logs[0].Append(&api.Record{
 		Value: []byte("third"),
